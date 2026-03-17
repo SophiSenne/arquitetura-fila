@@ -19,3 +19,6 @@ Entregas:
 - dockercompose
 - load test
 - testes unitarios
+
+
+dockerfiles criados com ajuda de IA
