@@ -21,4 +21,15 @@ Entregas:
 - testes unitarios
 
 
-dockerfiles criados com ajuda de IA
+
+
+[ ] conectar api no rabbit
+[ ] modelar banco
+[ ] criar script banco
+[ ] criar middleware
+[ ] puxar mensagens do rabbit
+[ ] testes de carga
+[ ] testes unitarios
+[ ] documentar api
+[ ] documentar banco
+[ ] documentar arquitetura
