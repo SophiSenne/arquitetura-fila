@@ -6,9 +6,76 @@ services:
     container_name: postgres_db
     restart: always
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
+    networks:
+      - app_network
+
+  rabbitmq:
+    build: ./rabbitMQ
+    container_name: rabbitmq_broker
+    restart: always
+    ports:
+      - "5672:5672"     # AMQP
+      - "15672:15672"   # Management UI
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - app_network
+
+  backend:
+    build: ./back-end
+    container_name: go_backend
+    restart: always
+    depends_on:
+      - db
+      - rabbitmq
+    ports:
+      - "8080:8080"
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: admin
+      DB_PASSWORD: admin
+      DB_NAME: database
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: admin
+      RABBITMQ_PASSWORD: admin
+    networks:
+      - app_network
+
+  middleware:
+    build: ./middleware
+    container_name: go_middleware
+    restart: always
+    depends_on:
+      - rabbitmq
+    ports:
+      - "8081:8080"
+    environment:
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: admin
+      RABBITMQ_PASSWORD: admin
+    networks:
+      - app_network
+
+  k6:
+    build: /home/inteli/Documents/inteli/09mod/arquitetura-fila/load-test
+    container_name: k6_load_test
+    depends_on:
+      - backend
+    networks:
+      - app_network
+    profiles:
+      - loadtest
 
 volumes:
   db_data:
+  rabbitmq_data:
+
+networks:
+  app_network:
+    driver: bridge

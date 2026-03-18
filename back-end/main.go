@@ -59,7 +59,7 @@ func main() {
 }
 
 func ProduceMessage(message SensorMessage) error {
-    conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
+    conn, err := amqp.Dial("amqp://guest:guest@rabbitmq:5672/")
 	if err != nil {
 		return err
 	}

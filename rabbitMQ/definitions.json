@@ -1,0 +1,16 @@
+{
+  "vhosts": [
+    { "name": "/" }
+  ],
+  "queues": [
+    {
+      "name": "SENSOR.DATA",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    }
+  ],
+  "exchanges": [],
+  "bindings": []
+}
