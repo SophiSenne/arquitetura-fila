@@ -14,7 +14,7 @@ services:
 
   rabbitmq:
     build: ./rabbitMQ
-    container_name: rabbitmq_broker
+    container_name: rabbitmq
     restart: always
     ports:
       - "5672:5672"     # AMQP
@@ -34,11 +34,6 @@ services:
     ports:
       - "8080:8080"
     environment:
-      DB_HOST: db
-      DB_PORT: 5432
-      DB_USER: admin
-      DB_PASSWORD: admin
-      DB_NAME: database
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
       RABBITMQ_USER: admin
@@ -55,6 +50,11 @@ services:
     ports:
       - "8081:8080"
     environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: admin
+      DB_PASSWORD: admin
+      DB_NAME: database
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
       RABBITMQ_USER: admin
