@@ -43,10 +43,11 @@ services:
 
   middleware:
     build: ./middleware
-    container_name: go_middleware
     restart: always
     depends_on:
       - rabbitmq
+    deploy:
+      replicas: 4   
     ports:
       - "8081:8081"
     environment:

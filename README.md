@@ -286,13 +286,77 @@ docker compose --profile loadtest up k6
 
 O k6 simula os 7 perfis de sensores cadastrados no seed.
 
-### Resultados
+### Resultado de Teste de Carga — k6
+
+#### Thresholds (Critérios de Aceitação)
+
+| Threshold | Critério | Resultado | Status |
+|---|---|---|---|
+| `http_req_duration` p(95) | < 500ms | **1,72ms** | ✅ Aprovado |
+| `sensor_error_rate` | < 1% | **0,00%** | ✅ Aprovado |
+| `sensor_request_duration` mediana | < 200ms | **732,97µs** | ✅ Aprovado |
+
+**Todos os thresholds foram aprovados.**
+
+#### Checks (Validações por Requisição)
+
+| Validação | Resultado |
+|---|---|
+| `status 2xx` | ✅ 100% |
+| `response time < 500ms` | ✅ 100% |
+| `body não vazio` | ✅ 100% |
+
+- **checks_total:** 54.189 (3 checks × 18.063 requisições)
+- **checks_succeeded:** 54.189 — **100,00%**
+- **checks_failed:** 0 — **0,00%**
+
+#### Métricas de Latência HTTP
+
+| Métrica | Valor |
+|---|---|
+| Média (avg) | 899,56µs |
+| Mínimo (min) | 367,33µs |
+| Mediana (med) | 732,97µs |
+| Máximo (max) | 37,72ms |
+| Percentil 90 (p90) | 1,1ms |
+| Percentil 95 (p95) | 1,72ms |
+
+#### Métricas Customizadas
+
+| Métrica | Valor |
+|---|---|
+| `sensor_error_rate` | 0,00% (0 erros em 18.063) |
+| `sensor_request_duration` (avg) | 899,56µs |
+| `sensor_request_duration` (med) | 732,97µs |
+| `sensor_total_requests` | 18.063 |
+
+#### Execução
+
+| Métrica | Valor |
+|---|---|
+| Duração por iteração (avg) | 299,42ms |
+| Duração por iteração (med) | 297,15ms |
+| Duração por iteração (max) | 506,4ms |
+| Duração por iteração (p95) | 481,94ms |
+| Total de iterações | 18.063 |
+| Throughput | 85,83 iterações/s |
+
+#### Rede
+
+| Métrica | Valor |
+|---|---|
+| Dados recebidos | 2,9 MB (14 kB/s) |
+| Dados enviados | 5,2 MB (25 kB/s) |
 
 <div align="center">
 <sup>Resultado dos testes</sup>
 <img src="image.png">
 <sup>Print dos resultados.</sup>
 </div>
+
+#### Conclusão
+
+A arquitetura demonstrou alta escalabilidade e desempenho nos testes de carga. Com 50 usuários simultâneos por 210 segundos, o sistema manteve latência abaixo dos limites definidos, graças ao desacoplamento proporcionado pela fila de mensagens. Não houve falhas nas mais de 18 mil requisições, e o throughput permaneceu estável, sem sinais de saturação do backend. 
 
 ## Testes Unitários
 
