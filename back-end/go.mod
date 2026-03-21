@@ -1,4 +1,4 @@
-module load-test
+module sensor-api
 
 go 1.25.0
 
