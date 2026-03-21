@@ -1,38 +1,38 @@
 # Sensor Telemetry API
 
-Sistema de ingestão de telemetria para dispositivos embarcados industriais. O backend recebe leituras de sensores via HTTP e as encaminha para uma fila RabbitMQ, onde um consumidor as processa e persiste em um banco de dados PostgreSQL.
+Sistema de ingestão de dados coletados por dispositivos embarcados industriais. O backend recebe leituras de sensores via HTTP e as encaminha para uma fila RabbitMQ, onde um consumidor as processa e persiste em um banco de dados PostgreSQL.
 
 ## Visão Geral
 
-A aplicação resolve um desafio de escalabilidade no monitoramento industrial: dispositivos embarcados enviam leituras periódicas de sensores (temperatura, umidade, presença, vibração, luminosidade e nível de reservatórios) para um backend central. Para suportar alto volume de requisições simultâneas sem gargalos, o processamento é assíncrono, ou seja, o endpoint apenas enfileira a mensagem e retorna imediatamente, enquanto um consumidor independente persiste os dados no banco.
+A aplicação resolve um desafio de escalabilidade no monitoramento industrial: dispositivos embarcados enviam leituras periódicas de sensores (temperatura, umidade, presença, vibração, luminosidade e nível de reservatórios). Para suportar o alto volume de requisições simultâneas sem gargalos, o endpoint apenas enfileira a mensagem e retorna imediatamente, enquanto um consumidor independente persiste os dados no banco.
 
 
 ## Arquitetura
 
 ```
-┌─────────────────┐     HTTP POST      ┌─────────────────┐
-│ Dispositivo      │ ─────────────────► │   Backend Go     │
-│ Embarcado        │                    │   (porta 8080)   │
-└─────────────────┘                    └────────┬────────┘
-                                                │ AMQP Publish
-                                                ▼
-                                       ┌─────────────────┐
-                                       │    RabbitMQ      │
-                                       │  fila: SENSOR.DATA│
-                                       │  (porta 5672)    │
-                                       └────────┬────────┘
-                                                │ AMQP Consume
-                                                ▼
-                                       ┌─────────────────┐
-                                       │   Middleware Go  │
-                                       │   (Consumidor)   │
-                                       └────────┬────────┘
-                                                │ SQL Insert
-                                                ▼
-                                       ┌─────────────────┐
-                                       │   PostgreSQL     │
-                                       │   (porta 5433)   │
-                                       └─────────────────┘
+┌─────────────────┐     HTTP POST       ┌─────────────────┐
+│ Dispositivo     │ ─────────────────►  │   Backend Go    │
+│ Embarcado       │                     │   (porta 8080)  │
+└─────────────────┘                     └────────┬────────┘
+                                                 │ AMQP Publish
+                                                 ▼
+                                        ┌─────────────────┐
+                                        │     RabbitMQ    │
+                                        │fila: SENSOR.DATA│
+                                        │   (porta 5672)  │
+                                        └────────┬────────┘
+                                                 │ AMQP Consume
+                                                 ▼
+                                        ┌─────────────────┐
+                                        │  Middleware Go  │
+                                        │   (Consumidor)  │
+                                        └────────┬────────┘
+                                                 │ SQL Insert
+                                                 ▼
+                                        ┌─────────────────┐
+                                        │   PostgreSQL    │
+                                        │  (porta 5433)   │
+                                        └─────────────────┘
 ```
 
 O fluxo completo funciona da seguinte forma:
@@ -40,8 +40,6 @@ O fluxo completo funciona da seguinte forma:
 1. O dispositivo embarcado envia um `POST /sensorData` com os dados da leitura
 2. O Backend valida o JSON e publica a mensagem na fila `SENSOR.DATA` do RabbitMQ
 3. O Middleware consome as mensagens da fila e as persiste no PostgreSQL
-4. Em caso de falha na persistência, a mensagem é reenfileirada (`Nack` com `requeue=true`)
-5. O middleware se reconecta automaticamente ao RabbitMQ em caso de queda (backoff de 5s)
 
 ## Estrutura do Projeto
 
@@ -99,22 +97,22 @@ O banco é estruturado para separar leituras analógicas (valores contínuos com
 ### Diagrama de Entidades
 
 ```
-sensor_types          devices
-─────────────         ─────────────────────
-id   (PK)             id          (PK UUID)
-name (UNIQUE)         serial      (UNIQUE)
-unit                  description
-                      active
-                      created_at
+sensor_types                        devices
+─────────────                       ─────────────────────
+id   (PK)                           id          (PK UUID)
+name (UNIQUE)                       serial      (UNIQUE)
+unit                                description
+                                    active
+                                    created_at
 
-analog_readings                 discrete_readings
-──────────────────────────      ──────────────────────────
-id           (PK BIGSERIAL)     id           (PK BIGSERIAL)
-device_id    (FK → devices)     device_id    (FK → devices)
-sensor_type_id (FK → sensor_types) sensor_type_id (FK → sensor_types)
-value        NUMERIC(10,4)      value        INTEGER
-collected_at TIMESTAMPTZ        collected_at TIMESTAMPTZ
-saved_at     TIMESTAMPTZ        saved_at     TIMESTAMPTZ
+analog_readings                     discrete_readings
+──────────────────────────          ──────────────────────────
+id           (PK BIGSERIAL)         id           (PK BIGSERIAL)
+device_id    (FK → devices)         device_id    (FK → devices)
+sensor_type_id (FK → sensor_types)  sensor_type_id (FK → sensor_types)
+value        NUMERIC(10,4)          value        INTEGER
+collected_at TIMESTAMPTZ            collected_at TIMESTAMPTZ
+saved_at     TIMESTAMPTZ            saved_at     TIMESTAMPTZ
 ```
 
 ### Tipos de Sensores (seed)
@@ -132,13 +130,13 @@ saved_at     TIMESTAMPTZ        saved_at     TIMESTAMPTZ
 
 | Serial | Descrição | Ativo |
 |---|---|---|
-| SN-TH-001 | Temperatura/Umidade — Sala de servidores A | ✅ |
-| SN-TH-002 | Temperatura/Umidade — Sala de servidores B | ✅ |
-| SN-PIR-001 | Presença PIR — Corredor principal | ✅ |
-| SN-VIB-001 | Vibração — Compressor #1 | ✅ |
-| SN-LUX-001 | Luminosidade — Área de produção | ✅ |
-| SN-NIV-001 | Nível — Reservatório de água tratada | ✅ |
-| SN-TH-003 | Temperatura — Câmara fria | ❌ (inativo) |
+| SN-TH-001 | Temperatura/Umidade — Sala de servidores A | [x] |
+| SN-TH-002 | Temperatura/Umidade — Sala de servidores B | [x] |
+| SN-PIR-001 | Presença PIR — Corredor principal | [x] |
+| SN-VIB-001 | Vibração — Compressor #1 | [x] |
+| SN-LUX-001 | Luminosidade — Área de produção | [x] |
+| SN-NIV-001 | Nível — Reservatório de água tratada | [x] |
+| SN-TH-003 | Temperatura — Câmara fria | [ ] |
 
 ## API
 
@@ -286,7 +284,15 @@ Com todos os serviços em execução, execute em um terminal separado:
 docker compose --profile loadtest up k6
 ```
 
-O k6 simula os 7 perfis de sensores cadastrados no seed, gerando payloads realistas com valores dentro das faixas esperadas para cada tipo de sensor.
+O k6 simula os 7 perfis de sensores cadastrados no seed.
+
+### Resultados
+
+<div align="center">
+<sup>Resultado dos testes</sup>
+<img src="image.png">
+<sup>Print dos resultados.</sup>
+</div>
 
 ## Testes Unitários
 
@@ -310,24 +316,7 @@ cd middleware
 go test ./unit-test/... -v
 ```
 
-Ou, usando Docker diretamente no container do middleware:
-
-```bash
-docker compose run --rm middleware go test ./unit-test/... -v
-```
-
 ## Variáveis de Ambiente
-
-### Backend
-
-| Variável | Padrão | Descrição |
-|---|---|---|
-| `RABBITMQ_HOST` | — | Hostname do RabbitMQ |
-| `RABBITMQ_PORT` | — | Porta AMQP (geralmente `5672`) |
-| `RABBITMQ_USER` | — | Usuário do RabbitMQ |
-| `RABBITMQ_PASSWORD` | — | Senha do RabbitMQ |
-
-### Middleware
 
 | Variável | Padrão | Descrição |
 |---|---|---|
