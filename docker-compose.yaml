@@ -63,7 +63,7 @@ services:
       - app_network
 
   k6:
-    build: /home/inteli/Documents/inteli/09mod/arquitetura-fila/load-test
+    build: ./load-test
     container_name: k6_load_test
     depends_on:
       - backend
