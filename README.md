@@ -23,10 +23,7 @@ Entregas:
 
 
 
-[ ] criar middleware
-[ ] puxar mensagens do rabbit
 [ ] testes de carga
-[ ] testes unitarios
 [ ] documentar api
 [ ] documentar banco
 [ ] documentar arquitetura
