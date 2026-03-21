@@ -23,9 +23,6 @@ Entregas:
 
 
 
-[ ] conectar api no rabbit
-[ ] modelar banco
-[ ] criar script banco
 [ ] criar middleware
 [ ] puxar mensagens do rabbit
 [ ] testes de carga
